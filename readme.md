@@ -28,11 +28,13 @@ Each step has the same tests that can be run, to detect issues that may be intro
 # QuickStart
 ## To Note!
 WhispersJS is in early development. The persist feature for subscribers is not yet active but is coming soon.
+## Interactive Demo
+You can play with an [interactive demo here](demo/demo.html).
 ## Add Initial Tag
-It's recommended to add the tag [whispersjs_tag.html](found here) at the top of your web pages inline. This will guarentee that all scripts can successfully publish messages to topics no matter when they load.
+It's recommended to add the tag [found here](whispersjs_tag.html) at the top of your web pages inline. This will guarentee that all scripts can successfully publish messages to topics no matter when they load.
 
 Once it's on the page you can start publishing events to topics:
-```
+```js
 // publish to a topic
 wspr.P(
 	// topic name
@@ -42,7 +44,7 @@ wspr.P(
 )
 ```
 And you can subscribe to topics:
-```
+```js
 wspr.S(
 	// topic name
 	"my_topic_name",
@@ -64,9 +66,9 @@ wspr.S(
 )
 ```
 Once all subscribers you expect to subscribe to topics have subscribed. You can tell WhispersJS that the subscribers are *Ready* and so that it does not need to hang onto processed messages in case another subscriber subscribes.
-```
+```js
 wspr.R();
 ```
 ## Add Whispers Plus (optional)
 Whispers Plus contains unessential code that can help working with the core WhispersJS code easier, for example it provides functionality for a status report, and can also convert events into more readable formats than the size optimised ones in the WhispersJS core code.
-[whispers_plus.js](found here)
+[found here](whispers_plus.js)
