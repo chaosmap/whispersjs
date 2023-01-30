@@ -1,0 +1,37 @@
+{
+	"subscriber_objects": "s",
+	"topic_objects": "T",
+	"process_topic_events": "I",
+	"process_topic_event": "E",
+	"subscribe_to_topic": "S",
+	"publish_message": "P",
+	"instance_id": "x",
+    "processing_retry_ms": "Z",
+    "all_subscribers_ready": "V",
+    "set_subscribers_ready": "R",
+    "processing_in_progress": "Y",
+    "callback_function": "Q",
+    "topic_events": "e",
+    "event_count": "C",
+	"event_subscribers": "W",
+	"get_object_entries": "X",
+	"persist": "U",
+	"topic_name": "O",
+	"processing_scheduled": "A",
+	"latest_attempt_start_ts": "D",
+	"first_attempt_start_ts": "F",
+	"subscriber_success": "G",
+	"attempts": "H",
+	"latest_attempt_end_ts": "J",
+	"latest_exception": "L",
+	"exceptions_count": "M",
+	"all_subscribers_successful": "N",
+	"self": "B",
+	"get_unix_timestamp": "q",
+	"subscriber_name": "w",
+	"created_ts": "f",
+	"message": "m"
+
+
+
+}

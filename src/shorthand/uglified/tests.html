@@ -1,0 +1,350 @@
+<html>
+  <head>
+    <title>Whispers JS Tests</title>
+    <style>
+      * {font-family: monospace; background-color: black; color: white;}
+      h1 {padding-top: 3em; text-align: center;}
+      #test_list dd, #test_list dt{padding: 0.5em}
+      #test_list dd {display: inline-block; margin-bottom: 1em; color: white}
+      .Pass {background-color: green;}
+      .Fail {background-color: red}
+      .Progress {background-color: purple;}
+      #test_status {font-size: 2em; padding: 0.5em; position: fixed; top: 0; margin: 0; width: 100%}
+    </style>
+    <script type="text/javascript" src="whispers.js" ></script>
+    <script type="text/javascript" src="whispers_plus.js" ></script>
+  </head>
+  <body>
+    <h1>Tests</h1>
+    <p id="test_status" class="Progress">Tests in Progress...</p>
+    <dl id="test_list"></dl>
+    <script type="text/javascript">
+
+      setInterval(() => {
+          const elm = document.getElementsByClassName('Progress')[0]
+          if (elm) {
+            let dot_num = (elm.innerText.match(/\./g) || []).length
+            elm.innerText = elm.innerText.trim().replaceAll('.', '') + '.'.repeat(++dot_num % 4)
+          }
+        },
+        500
+      )
+
+      const test_log = document.getElementById("test_list");
+      let no_tests_failed = true;
+
+      function add_to_test_log(test_name, test_result) {
+        const test_name_el = document.createElement("dt");
+        const test_name_text = document.createTextNode(test_name);
+        test_name_el.appendChild(test_name_text);
+        test_log.appendChild(test_name_el);
+        
+        const res_el = document.createElement("dd");
+        res_el.setAttribute("class", test_result);
+        const res_text = document.createTextNode(test_result);
+        res_el.appendChild(res_text);
+        test_log.appendChild(res_el);
+      }
+
+      function boolean_test_pass(test_name, bool_func) {
+        let result = false;
+        try {
+          result = bool_func() === true;
+        } catch (e) {
+          console.error(e)
+        }
+        add_to_test_log(
+          test_name,
+          result ? "Pass" : "Fail"
+        );
+        return result;
+      }
+
+      function compare_unordered_list(list_1, list_2) {
+        list_1.sort();
+        list_2.sort();
+
+        for (let i=0; i<list_1.length; i++) {
+          if (list_1[i] !== list_2[i]) {
+            console.error(`list_1[${i}] (${list_1[i]}) != list_2[${i}] (${list_2[i]})`)
+            return false
+          }
+        }
+
+        const l1l = JSON.parse(JSON.stringify(list_1))
+        const l2l = JSON.parse(JSON.stringify(list_2))
+        if (l1l.length !== l2l.length) {
+          console.error(
+            `list_1 length (${l1l.length}) does not match list_2 length (${l2l.length}).`, 
+            l1l, 
+            l2l
+          )
+          return false
+        }
+        return true
+      }
+
+
+      async function test() {
+
+        const trunk_name = "test_trunk"
+
+        localStorage.clear();
+
+        // t = new WhispersJS()
+        t = WhispersJS()
+
+        boolean_test_pass(
+          "Testing WhispersJS initialised", 
+          function() {
+            return t ? true : false;
+          }
+        )
+
+        window.res = {
+          "intruder": [],
+          "intruder_errors": [],
+          WhispersJS: [],
+          next: []
+        };
+        window.expected_res = {
+          "intruder": [],
+          "intruder_errors": [],
+          WhispersJS: [],
+          next: []
+        };
+
+
+        const g1_func = (m) => {window.res.intruder.push(`guard_1 ${m.m}`); return true;};
+        await t.S("intruder", "guard_1", g1_func);
+
+        const g2_func = (m) => {window.res.intruder.push(`guard_2 ${m.m}`); return true;}
+        await t.S("intruder", "guard_2", g2_func);
+
+        await t.P("intruder", "Amber Alert", false);
+        await new Promise(resolve => setTimeout(resolve, 10));
+        expected_res.intruder = expected_res.intruder.concat(["guard_1 Amber Alert", "guard_2 Amber Alert"])
+        no_tests_failed &= boolean_test_pass(
+          "Testing results pushed to array match expected values.", 
+          function() {
+            return compare_unordered_list(window.res.intruder, expected_res.intruder)
+          }
+        )
+
+        await t.I()
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "After processing, testing results pushed to array match expected values.", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, expected_res.intruder
+            )
+          }
+        )
+
+        const g3_func = (m) => {window.res.intruder.push(`guard_3 ${m.m}`); return true;};
+        await t.S("intruder", "guard_3", g3_func);
+        expected_res.intruder = expected_res.intruder.concat(["guard_3 Amber Alert"])
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing adding a subscriber triggers only the unfulfilled subscription with the existing events.", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+
+        const g3a_func = (m) => {window.res.intruder.push(`guard_3a ${m.m}`); return true;};
+        await Promise.allSettled([
+
+            t.I(),
+            t.S("intruder", "guard_3a", g3a_func),
+            t.I(),
+            t.I(),
+            t.I()
+
+          ]
+        )
+        await t.I()
+
+        expected_res.intruder = expected_res.intruder.concat(["guard_3a Amber Alert"])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing that async calls do not cause duplicate function completion", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        const sys_func = (m) => {window.res.WhispersJS.push(`system_log ${JSON.stringify(m.m)}`); return true;};
+        await t.S("#", "system_log", sys_func)
+        expected_res.WhispersJS = expected_res.WhispersJS.concat([
+          // "system_log {\"e\":\"R\"}",
+          "system_log {\"e\":\"I\"}",
+          "system_log {\"e\":\"S\",\"O\":\"#\",\"w\":\"system_log\",\"U\":false}",
+          "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_1\",\"U\":false}",
+          "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_2\",\"U\":false}",
+          "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_3\",\"U\":false}",
+          "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_3a\",\"U\":false}"
+        ])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing adding a sys subscriber pushes the expected m.", 
+          function() {
+            return compare_unordered_list(
+              window.res.WhispersJS, 
+              expected_res.WhispersJS
+            )
+          }
+        )
+
+        await t.P("intruder", "Green Alert", true);
+        expected_res.intruder = expected_res.intruder.concat([
+          "guard_1 Green Alert", 
+          "guard_2 Green Alert", 
+          "guard_3 Green Alert",
+          "guard_3a Green Alert"
+        ])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing intruder m only goes to guards.", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        const g3_func_error = (m) => {throw "g3 error test"; return true;};
+        await t.S("intruder", "guard_3", g3_func_error, [0])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing the subscriber does not re-process already processed events when changing the callback function", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        await t.P("intruder", "Red Alert", true);
+        expected_res.intruder = expected_res.intruder.concat([
+            "guard_1 Red Alert", 
+            "guard_2 Red Alert", 
+            "guard_3a Red Alert"
+        ])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing the subsribers without failing functions run as expected", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        no_tests_failed &= boolean_test_pass(
+          "Testing the expected number of events are in the trunk BEFORE subsReady() is called",
+          () => {
+            return Object.keys(t.T.intruder.e).length == 3
+          }
+        )
+
+
+        er = state_report(t);
+        console.log(er)
+
+        t.R()
+
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        let topic_keys = Object.keys(t.T.intruder.e)
+        no_tests_failed &= boolean_test_pass(
+          "Testing the expected number of events are in the trunk AFTER subsReady() is called",
+          () => {return topic_keys.length == 1}
+        )
+        no_tests_failed &= boolean_test_pass(
+          "Testing the remaining event is the red alert one",
+          () => {return t.T.intruder.e[topic_keys[0]]["m"] == "Red Alert"}
+        )
+
+        await t.S("intruder", "guard_3", g3_func)
+        expected_res.intruder = expected_res.intruder.concat([ 
+            "guard_3 Red Alert"
+        ])
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing that returning guard_3 to operating function works as expected, and the late subscriber is logged", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        const slow_guard_func = async (m) => {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          window.res.intruder.push(`Slow Guard ${m.m}`); 
+          return true;
+        };
+        await t.S("intruder", "slow_guard", slow_guard_func)
+        t.P("intruder", "Slow Alert");
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        expected_res.intruder = expected_res.intruder.concat([ 
+            //`system_log {\"type\":\"late_subscriber\",\"N\":\"slow_guard\",\"O\":\"intruder\"}`,
+            "guard_1 Slow Alert", 
+            "guard_2 Slow Alert", 
+            "guard_3 Slow Alert",
+            "guard_3a Slow Alert"
+        ])
+        no_tests_failed &= boolean_test_pass(
+          "Testing that the Slow Alert gets picked up by all the subscribers with quick functions.", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        expected_res.intruder = expected_res.intruder.concat([ 
+            `Slow Guard Slow Alert`
+        ])
+        no_tests_failed &= boolean_test_pass(
+          "Testing that Slow Guard finally completes the function.", 
+          function() {
+            return compare_unordered_list(
+              window.res.intruder, 
+              expected_res.intruder
+            )
+          }
+        )
+        
+        const ts = document.getElementById("test_status")
+        ts.innerText = no_tests_failed ? "All Tests Passed!" : "One or more tests failed...";
+        ts.setAttribute("class", no_tests_failed ? "Pass" : "Fail");
+
+
+      }
+
+
+
+
+      test()
+    </script>
+  </body>
+</html>

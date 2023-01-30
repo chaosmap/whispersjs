@@ -1,0 +1,274 @@
+<html>
+  <head>
+    <title>Whispers JS Tests</title>
+    <style>
+      * {font-family: monospace; color: white;}
+      body, input, textarea {background-color: black; }
+      h1 {padding-top: 1em; text-align: center;}
+      th, td {background-color: grey; padding: 1em;}
+      .formblock {display: inline-block; width: 45%; vertical-align: top; }
+      .formblock form {margin: 1em; background-color: rgba(255, 255, 255, 0.1); padding: 1em}
+      .disabled_button {
+        background-color: rgb(10, 10,10); 
+        border-style: inset; 
+        color: rgb(150,150,150)
+      }
+      #subs_ready {width: 30em}
+      input, legend, label, textarea, fieldset {margin: 0.5em; padding: 1em}
+      dt {float: left; color: green; font-weight: bold;}
+      dl {clear: left; background-color: rgba(255,0,0,0.05); border-left: 1px solid white; padding-left: 0.5em}
+      dt, dd {padding: 0.1em}
+      dt {padding-right: 1em;}
+      code {color: orange;}
+    </style>
+    <script type="text/javascript">
+      // PUT_INLINE_WHISPERSJS_LIBRARY_HERE
+    </script>
+    <script type="text/javascript" src="whispers_plus.js" ></script>
+  </head>
+  <body>
+    <div class="formblock">
+      <form action="" method="get" id="subscribe_form">
+        <h1>Add Subscriber</h1>
+        <p>A subscriber will receive any message sent to the topic it is subscribed to. All subscribers that are subscribed to a topic will
+        recieve a copy of each message. The message is sent to the subscribers callback function in an "event" object, this event contains the message plus other useful data such as a timestamp of when the event was created. If a topic that the subscriber is subscribing to does not exist, then it is automatically created. If you subscribe more than once with the same subscriber name, the old subscriber is replaced.</p>
+        <p>To subscribe in code, you would call the S() function on the whispers object, which requires the topic name, the name you have given to your subscriber, the callback function which will recieve any events and be used to process messages, and finally whether you want messages sent to the subscriber to persist in local storage until the subscriber has successfully processed the event.</p>
+        <pre><code>
+          wspr.S(
+            // name of topic
+            "AnExampletopic",
+            // name of subscriber 
+            "SubscriberName", 
+            // callback function for event which contains message
+            function(event) {
+              //do stuff with message
+              // return true when processed successfully
+              return true
+            },
+            // persist unprocessed events for this subscriber
+            // This means attempts to store the event locally
+            // will be made until it is consumed by all subscribers
+            // that means the message can remain if a user closes
+            // the browser and returns later for example.
+            true
+          );
+        </code></pre>
+        <div>
+          <label for="subscribe_topic_name">topic Name</label>
+          <input type="text" name="subscribe_topic_name" id="subscribe_topic_name" minlength="3" required>
+        </div>
+        <div>
+          <label for="subscribe_subscriber_name">Subscriber Name</label>
+          <input type="text" name="subscribe_subscriber_name" id="subscribe_subscriber_name" minlength="3" required>
+        </div>
+        <fieldset>
+          <legend>These fields simulates the callback function that would normally be set...</legend>
+          <p>Because its more complicated than useful for the demo, for the demo we will automatically create the callback function that would usually be submitted as a parameter when you subscibe to a topic. Below are options you can customise for the created callback function enabling you to observe the most typical outcomes of a callback function.</p>
+          <div>
+            <label for="subscribe_error_message">Error Message (if triggered)</label><br />
+            <textarea rows="10" cols="50" name="subscribe_error_message" id="subscribe_error_message"></textarea>
+          </div>
+          <fieldset>
+            <legend>Subscriber function outcome</legend>
+            <label><input type="radio" name="func_outcome" value="success" checked/> Successfully Processed!</label><br />
+            <label><input type="radio" name="func_outcome" value="could_not_process" /> Could not process message at this time...</label><br />
+            <label><input type="radio" name="func_outcome" value="error" /> Function throws an uncaught exception...</label><br />
+          </fieldset>
+        </fieldset>
+        <div>
+          <label for="persist_event">Attempt to persist event until consumed</label>
+          <input type="checkbox" name="persist_event" id="persist_event" checked>
+        </div>
+        <div>
+          <input type="submit" value="Create Subscriber">
+        </div>
+      </form>
+    </div>
+    <div class="formblock">
+      <form action="" method="get" id="subscribers_ready_form">
+        <h1>Confirm All Subscribers Ready</h1>
+        <p>Events (containing messages) are kept until WhispersJS is told that all expected subscribers have subscribed.</p>
+        <p>This ensures that subscribers do not miss out on messages if they are delayed for some reason. Also for subscribers who ask for persisted messages, they can process messages on another page or in a future visit, as the messages are persisted in local storage until the subscribers have processed them successfully. In code the subscribers are set to ready using <code>wspr.R()</code></p>
+        <div>
+          <input id="subs_ready" type="submit" value="Set Subscribers as Ready">
+        </div>
+      </form>
+      <form action="" method="get" id="publish_message_form">
+        <h1>Publish message to topic</h1>
+        <p>This publishes a message to a topic, where all subscribers who are subscribed to that topic will recieve the message inside an event object which
+          contains additional metadata. If the topic does not exist, it will be automatically created.</p>
+        <p>In code publishing a message to a topic is done with:</p>
+        <pre><code>
+          wspr.P(
+            // the topic you want to publish to.
+            "my_topic",
+            // the message you want to send
+            "Hello World"
+          );
+        </code></pre>
+        <div>
+          <label for="publish_message_topic_name">topic Name</label>
+          <input type="text" name="publish_message_topic_name" id="publish_message_topic_name" minlength="3" required>
+        </div>
+        <div>
+          <label for="publish_message_message">message</label><br />
+          <textarea rows="10" cols="50" name="publish_message_message" id="publish_message_message" required></textarea>
+        </div>
+        <div>
+          <input type="submit" value="Send Message">
+        </div>
+      </form>
+    </div>
+    <h1>Events Processed</h1>
+    <p>Below shows a log of events that have been recieved by the topics setup. The WhispersJS topic is setup by default, also some of the variables have been renamed for the demo to make it more readable.</p>
+    <div id='events_processed'><div></div></div>
+    <h1>State Report</h1>
+    <p>Below shows an overall report of the current state of WhispersJS. It gives visibility on how many messages have been processed, how many are currently unprocessed and any uncaught errors that are occuring from subscribers callback functions.</p>
+    <div id='state_report'><div></div></div>
+    <h1>Whispers State Snapshot</h1>
+    <p>This shows a granular, technical view of the current state of the WhispersJS object. It may not be easy to understand without studying the code.</p>
+    <div id='state_snapshot'><div></div></div>
+
+    <script type="text/javascript">
+
+      // console.log(JSON.parse('name_map.json')); 
+
+      events_processed_list = [];
+
+      wspr.S('#', 'default_whispers_subscriber', (raw_event) => {
+        let event = deep_copy(raw_event)
+        const event_type_map = {
+          'S': 'Subcriber Subscribed to topic',
+          'I': 'WhispersJS was initialised',
+          'R': 'Subscribers were set to ready'
+        }
+        event.m['Event Type'] = event_type_map[event.m.e]
+        delete event.b;
+        event.f = new Date(event.f).toISOString();
+
+        events_processed_list.push(
+          {'Topic: # (The "root" WhispersJS Topic); Subscriber: default_whispers_subscriber;': event}
+        )
+
+        return true;
+      })
+
+      name_map = name_map_reversed()
+
+
+      document.getElementById('publish_message_form').addEventListener(
+        "submit", 
+        (e)=>{
+          e.preventDefault();
+          const form_data = Object.fromEntries(new FormData(e.target));
+          console.log(form_data)
+
+          wspr.P(form_data.publish_message_topic_name, form_data.publish_message_message)
+
+          alert('Submitted Successfully')
+
+          return false;
+        }
+      );
+      
+
+      document.getElementById('subscribe_form').addEventListener(
+        "submit", 
+        (e)=>{
+          e.preventDefault();
+          const form_data = Object.fromEntries(new FormData(e.target));
+          console.log(form_data)
+
+          let display_name = `topic: ${form_data.subscribe_topic_name}; Subscriber: ${form_data.subscribe_subscriber_name};`
+
+          wspr.S(
+            form_data.subscribe_topic_name,
+            form_data.subscribe_subscriber_name,
+            (raw_event) => {
+              // display_message(form_data.subscribe_topic_name, form_data.subscribe_subscriber_name, event)
+
+              let event = deep_copy(raw_event)
+
+              delete event.b;
+              event.f = new Date(event.f).toISOString();
+
+              console.log(display_name)
+              const log_event = {}
+              log_event[display_name] = event;
+              events_processed_list.push(
+                log_event
+              )
+
+
+              if (form_data.func_outcome == 'error') {
+                throw form_data.subscribe_error_message
+              }
+              return form_data.func_outcome=="success"
+            },
+            form_data.persist_event=="on",
+          )
+
+          alert('Submitted Successfully')
+
+          return false;
+        }
+      );
+
+      document.getElementById('subscribers_ready_form').addEventListener(
+        "submit", 
+        (e)=>{
+          e.preventDefault();
+          console.log(e)
+          const form_data = Object.fromEntries(new FormData(e.target));
+          console.log(form_data)
+
+          const form_button = document.getElementById('subs_ready');
+          form_button.disabled = true;
+          form_button.setAttribute('value', 'Setting Subscribers as Ready was Successful')
+          form_button.setAttribute('class', 'disabled_button')
+
+          wspr.R()
+
+          alert('Submitted Successfully')
+
+          return false;
+        }
+      );
+
+      function ups_ele(parent_element, id, element_type) {
+        let el = document.getElementById(id)
+        if (!el) {
+          el = document.createElement(element_type)
+          el.setAttribute('id', id)
+          parent_element.appendChild(el)
+        }
+        return el
+      }
+
+      window.setInterval(
+        function() {
+          let ele = document.getElementById('events_processed')
+          ele.replaceChild(object_to_html(events_processed_list, name_map), ele.firstChild)
+        },
+        1000
+      )
+      
+      window.setInterval(
+        function() {
+          let ele = document.getElementById('state_report')
+          ele.replaceChild(object_to_html(state_report(wspr), name_map), ele.firstChild)
+        },
+        1000
+      )
+
+      window.setInterval(
+        function() {
+          let ele = document.getElementById('state_snapshot')
+          ele.replaceChild(object_to_html(wspr, name_map), ele.firstChild)
+        },
+        1000
+      )
+      
+    </script>
+  </body>
+</html>
