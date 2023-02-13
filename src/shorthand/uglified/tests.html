@@ -12,6 +12,9 @@
       #test_status {font-size: 2em; padding: 0.5em; position: fixed; top: 0; margin: 0; width: 100%}
     </style>
     <script type="text/javascript" src="whispers.js" ></script>
+    <script type="text/javascript">
+      wspr = WhispersJS();
+    </script>
     <script type="text/javascript" src="whispers_plus.js" ></script>
   </head>
   <body>
@@ -87,17 +90,10 @@
 
       async function test() {
 
-        const trunk_name = "test_trunk"
-
-        localStorage.clear();
-
-        // t = new WhispersJS()
-        t = WhispersJS()
-
         boolean_test_pass(
           "Testing WhispersJS initialised", 
           function() {
-            return t ? true : false;
+            return wspr ? true : false;
           }
         )
 
@@ -116,12 +112,12 @@
 
 
         const g1_func = (m) => {window.res.intruder.push(`guard_1 ${m.m}`); return true;};
-        await t.S("intruder", "guard_1", g1_func);
+        await wspr.S("intruder", "guard_1", g1_func);
 
         const g2_func = (m) => {window.res.intruder.push(`guard_2 ${m.m}`); return true;}
-        await t.S("intruder", "guard_2", g2_func);
+        await wspr.S("intruder", "guard_2", g2_func);
 
-        await t.P("intruder", "Amber Alert", false);
+        await wspr.P("intruder", "Amber Alert", false);
         await new Promise(resolve => setTimeout(resolve, 10));
         expected_res.intruder = expected_res.intruder.concat(["guard_1 Amber Alert", "guard_2 Amber Alert"])
         no_tests_failed &= boolean_test_pass(
@@ -131,7 +127,7 @@
           }
         )
 
-        await t.I()
+        await wspr.I()
         await new Promise(resolve => setTimeout(resolve, 10));
         no_tests_failed &= boolean_test_pass(
           "After processing, testing results pushed to array match expected values.", 
@@ -143,7 +139,7 @@
         )
 
         const g3_func = (m) => {window.res.intruder.push(`guard_3 ${m.m}`); return true;};
-        await t.S("intruder", "guard_3", g3_func);
+        await wspr.S("intruder", "guard_3", g3_func);
         expected_res.intruder = expected_res.intruder.concat(["guard_3 Amber Alert"])
 
         await new Promise(resolve => setTimeout(resolve, 10));
@@ -161,15 +157,15 @@
         const g3a_func = (m) => {window.res.intruder.push(`guard_3a ${m.m}`); return true;};
         await Promise.allSettled([
 
-            t.I(),
-            t.S("intruder", "guard_3a", g3a_func),
-            t.I(),
-            t.I(),
-            t.I()
+            wspr.I(),
+            wspr.S("intruder", "guard_3a", g3a_func),
+            wspr.I(),
+            wspr.I(),
+            wspr.I()
 
           ]
         )
-        await t.I()
+        await wspr.I()
 
         expected_res.intruder = expected_res.intruder.concat(["guard_3a Amber Alert"])
         await new Promise(resolve => setTimeout(resolve, 10));
@@ -184,7 +180,7 @@
         )
 
         const sys_func = (m) => {window.res.WhispersJS.push(`system_log ${JSON.stringify(m.m)}`); return true;};
-        await t.S("#", "system_log", sys_func)
+        await wspr.S("#", "system_log", sys_func)
         expected_res.WhispersJS = expected_res.WhispersJS.concat([
           // "system_log {\"e\":\"R\"}",
           "system_log {\"e\":\"I\"}",
@@ -205,7 +201,7 @@
           }
         )
 
-        await t.P("intruder", "Green Alert", true);
+        await wspr.P("intruder", "Green Alert", true);
         expected_res.intruder = expected_res.intruder.concat([
           "guard_1 Green Alert", 
           "guard_2 Green Alert", 
@@ -224,7 +220,7 @@
         )
 
         const g3_func_error = (m) => {throw "g3 error test"; return true;};
-        await t.S("intruder", "guard_3", g3_func_error, [0])
+        await wspr.S("intruder", "guard_3", g3_func_error, [0])
         await new Promise(resolve => setTimeout(resolve, 10));
         no_tests_failed &= boolean_test_pass(
           "Testing the subscriber does not re-process already processed events when changing the callback function", 
@@ -236,7 +232,7 @@
           }
         )
 
-        await t.P("intruder", "Red Alert", true);
+        await wspr.P("intruder", "Red Alert", true);
         expected_res.intruder = expected_res.intruder.concat([
             "guard_1 Red Alert", 
             "guard_2 Red Alert", 
@@ -256,29 +252,79 @@
         no_tests_failed &= boolean_test_pass(
           "Testing the expected number of events are in the trunk BEFORE subsReady() is called",
           () => {
-            return Object.keys(t.T.intruder.e).length == 3
+            return Object.keys(wspr.T.intruder.e).length == 3
           }
         )
 
 
-        er = state_report(t);
+        er = wspr.state_report(wspr);
         console.log(er)
 
-        t.R()
 
+        wspr.set_expected_subscribers(
+          {
+            'intruder': ['guard_1', 'guard_2', 'future_guard']
+          }
+        )
 
         await new Promise(resolve => setTimeout(resolve, 10));
-        let topic_keys = Object.keys(t.T.intruder.e)
+        no_tests_failed &= boolean_test_pass(
+          "Testing that setting the expected subscribers waits for a future subscriber", 
+          function() {
+            return compare_unordered_list(
+              Array.from(wspr.unsubscribed_expected_subscribers['intruder']), 
+              ['future_guard']
+            )
+          }
+        )
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing that all subscribers ready is false", 
+          function() {
+            return compare_unordered_list(
+              [wspr.V], 
+              [false]
+            )
+          }
+        )
+
+        wspr.S('intruder', 'future_guard', (event)=>{return true;})
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing that setting the expected subscribers waits for a future subscriber", 
+          function() {
+            return compare_unordered_list(
+              Object.keys(wspr.unsubscribed_expected_subscribers), 
+              []
+            )
+          }
+        )
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Testing that all subscribers ready is true", 
+          function() {
+            return compare_unordered_list(
+              [wspr.V], 
+              [true]
+            )
+          }
+        )
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+        let topic_keys = Object.keys(wspr.T.intruder.e)
         no_tests_failed &= boolean_test_pass(
           "Testing the expected number of events are in the trunk AFTER subsReady() is called",
           () => {return topic_keys.length == 1}
         )
         no_tests_failed &= boolean_test_pass(
           "Testing the remaining event is the red alert one",
-          () => {return t.T.intruder.e[topic_keys[0]]["m"] == "Red Alert"}
+          () => {return wspr.T.intruder.e[topic_keys[0]]["m"] == "Red Alert"}
         )
 
-        await t.S("intruder", "guard_3", g3_func)
+        await wspr.S("intruder", "guard_3", g3_func)
         expected_res.intruder = expected_res.intruder.concat([ 
             "guard_3 Red Alert"
         ])
@@ -298,8 +344,8 @@
           window.res.intruder.push(`Slow Guard ${m.m}`); 
           return true;
         };
-        await t.S("intruder", "slow_guard", slow_guard_func)
-        t.P("intruder", "Slow Alert");
+        await wspr.S("intruder", "slow_guard", slow_guard_func)
+        wspr.P("intruder", "Slow Alert");
 
         await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -333,6 +379,11 @@
             )
           }
         )
+
+
+
+
+
         
         const ts = document.getElementById("test_status")
         ts.innerText = no_tests_failed ? "All Tests Passed!" : "One or more tests failed...";

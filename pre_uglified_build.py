@@ -2,7 +2,7 @@ import json
 
 
 test_files = [
-	'tests.html',
+	'tests_template.html',
 	# 'test_para.html'
 ]
 

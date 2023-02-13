@@ -1,4 +1,4 @@
-function state_report(whispersjs_object) {
+wspr.state_report = (whispersjs_object) => {
   const report = {
     instance_id: whispersjs_object.instance_id,
     topics: {},
@@ -41,24 +41,24 @@ function state_report(whispersjs_object) {
 }
 
 
-function name_map() {
+wspr.name_map = ()=>{
   return // PUT_INLINE_WHISPERSJS_SHORTHAND_NAME_MAP_HERE
 }
 
-function name_map_reversed() {
+wspr.name_map_reversed = ()=>{
   const rev = {}
-  for (let [key, val] of Object.entries(name_map())){
+  for (let [key, val] of Object.entries(wspr.name_map())){
     rev[val] = key
   }
   return rev
 }
 
-function object_to_html(object, name_map) {
+wspr.object_to_html = (object, name_map)=>{
   const typo = typeof object;
   if (typo == 'object') {
     let child_el = document.createElement('dl')
     for (let [name, value] of Object.entries(object)) {
-      let v = object_to_html(value, name_map)
+      let v = wspr.object_to_html(value, name_map)
 
       if (v !== undefined) {
 
@@ -94,7 +94,7 @@ function object_to_html(object, name_map) {
 }
 
 
-deep_copy=(obj)=>{
+wspr.deep_copy=(obj)=>{
   return JSON.parse(
     JSON.stringify(
       obj
@@ -103,3 +103,44 @@ deep_copy=(obj)=>{
 };
 
 
+// This function allows you to submit to whispersjs what subscribers you expect
+// and to automatically call the subscribers ready function once they have all subscribed.
+// expected_subscribers are expected to be submitted in the following format
+// {
+//       '[topic_name]': ['expected_subscriber_name_1', 'expected_subscriber_name_2'],
+//       '[another_topic_name': ['expected_subscriber_name_1', 'expected_subscriber_name_2']
+// }
+wspr.set_expected_subscribers = (expected_subscribers) => {
+  for (const key of Object.keys(expected_subscribers)) {
+    expected_subscribers[key] = new Set(expected_subscribers[key])
+  }
+  wspr.unsubscribed_expected_subscribers = expected_subscribers;
+
+  const check_topic_and_subscriber = (topic, subscriber_name) => {
+    if (wspr.unsubscribed_expected_subscribers[topic]) {
+      if (wspr.unsubscribed_expected_subscribers[topic].has(subscriber_name)) {
+        wspr.unsubscribed_expected_subscribers[topic].delete(subscriber_name)
+      }
+      if (wspr.unsubscribed_expected_subscribers[topic].size == 0) {
+        delete wspr.unsubscribed_expected_subscribers[topic]
+      }
+    }
+    if (!wspr.all_subscribers_ready && Object.keys(wspr.unsubscribed_expected_subscribers).length == 0 ) {
+      wspr.set_subscribers_ready()
+    }
+  }
+
+  wspr.subscribe_to_topic(
+    '#',
+    'subscribers_ready_check',
+    (event) => {
+      if (event.message.e == 'S') {
+        check_topic_and_subscriber(
+          event.message.topic_name,
+          event.message.subscriber_name
+        )
+      }
+      return true;
+    }
+  )
+}

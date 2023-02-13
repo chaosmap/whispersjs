@@ -1,4 +1,4 @@
-function state_report(whispersjs_object) {
+wspr.state_report = (whispersjs_object) => {
   const report = {
     x: whispersjs_object.x,
     topics: {},
@@ -41,7 +41,7 @@ function state_report(whispersjs_object) {
 }
 
 
-function name_map() {
+wspr.name_map = ()=>{
   return {
 	"subscriber_objects": "s",
 	"topic_objects": "T",
@@ -81,20 +81,20 @@ function name_map() {
 }
 }
 
-function name_map_reversed() {
+wspr.name_map_reversed = ()=>{
   const rev = {}
-  for (let [key, val] of Object.entries(name_map())){
+  for (let [key, val] of Object.entries(wspr.name_map())){
     rev[val] = key
   }
   return rev
 }
 
-function object_to_html(object, name_map) {
+wspr.object_to_html = (object, name_map)=>{
   const typo = typeof object;
   if (typo == 'object') {
     let child_el = document.createElement('dl')
     for (let [name, value] of Object.entries(object)) {
-      let v = object_to_html(value, name_map)
+      let v = wspr.object_to_html(value, name_map)
 
       if (v !== undefined) {
 
@@ -130,7 +130,7 @@ function object_to_html(object, name_map) {
 }
 
 
-deep_copy=(obj)=>{
+wspr.deep_copy=(obj)=>{
   return JSON.parse(
     JSON.stringify(
       obj
@@ -139,3 +139,44 @@ deep_copy=(obj)=>{
 };
 
 
+// This function allows you to submit to whispersjs what subscribers you expect
+// and to automatically call the subscribers ready function once they have all subscribed.
+// expected_subscribers are expected to be submitted in the following format
+// {
+//       '[O]': ['expected_w_1', 'expected_w_2'],
+//       '[another_O': ['expected_w_1', 'expected_w_2']
+// }
+wspr.set_expected_subscribers = (expected_subscribers) => {
+  for (const key of Object.keys(expected_subscribers)) {
+    expected_subscribers[key] = new Set(expected_subscribers[key])
+  }
+  wspr.unsubscribed_expected_subscribers = expected_subscribers;
+
+  const check_topic_and_subscriber = (topic, w) => {
+    if (wspr.unsubscribed_expected_subscribers[topic]) {
+      if (wspr.unsubscribed_expected_subscribers[topic].has(w)) {
+        wspr.unsubscribed_expected_subscribers[topic].delete(w)
+      }
+      if (wspr.unsubscribed_expected_subscribers[topic].size == 0) {
+        delete wspr.unsubscribed_expected_subscribers[topic]
+      }
+    }
+    if (!wspr.V && Object.keys(wspr.unsubscribed_expected_subscribers).length == 0 ) {
+      wspr.R()
+    }
+  }
+
+  wspr.S(
+    '#',
+    'subscribers_ready_check',
+    (event) => {
+      if (event.m.e == 'S') {
+        check_topic_and_subscriber(
+          event.m.O,
+          event.m.w
+        )
+      }
+      return true;
+    }
+  )
+}

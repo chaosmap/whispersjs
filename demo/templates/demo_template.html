@@ -153,7 +153,7 @@
         return true;
       })
 
-      name_map = name_map_reversed()
+      name_map = wspr.name_map_reversed()
 
 
       document.getElementById('publish_message_form').addEventListener(
@@ -248,7 +248,7 @@
       window.setInterval(
         function() {
           let ele = document.getElementById('events_processed')
-          ele.replaceChild(object_to_html(events_processed_list, name_map), ele.firstChild)
+          ele.replaceChild(wspr.object_to_html(events_processed_list, wspr.name_map), ele.firstChild)
         },
         1000
       )
@@ -256,7 +256,7 @@
       window.setInterval(
         function() {
           let ele = document.getElementById('state_report')
-          ele.replaceChild(object_to_html(state_report(wspr), name_map), ele.firstChild)
+          ele.replaceChild(wspr.object_to_html(wspr.state_report(wspr), wspr.name_map), ele.firstChild)
         },
         1000
       )
@@ -264,7 +264,7 @@
       window.setInterval(
         function() {
           let ele = document.getElementById('state_snapshot')
-          ele.replaceChild(object_to_html(wspr, name_map), ele.firstChild)
+          ele.replaceChild(wspr.object_to_html(wspr, wspr.name_map), ele.firstChild)
         },
         1000
       )
