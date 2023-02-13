@@ -42,43 +42,7 @@ function state_report(whispersjs_object) {
 
 
 function name_map() {
-  return {
-	"subscriber_objects": "s",
-	"topic_objects": "T",
-	"process_topic_events": "I",
-	"process_topic_event": "E",
-	"subscribe_to_topic": "S",
-	"publish_message": "P",
-	"instance_id": "x",
-    "processing_retry_ms": "Z",
-    "all_subscribers_ready": "V",
-    "set_subscribers_ready": "R",
-    "processing_in_progress": "Y",
-    "callback_function": "Q",
-    "topic_events": "e",
-    "event_count": "C",
-	"event_subscribers": "W",
-	"get_object_entries": "X",
-	"persist": "U",
-	"topic_name": "O",
-	"processing_scheduled": "A",
-	"latest_attempt_start_ts": "D",
-	"first_attempt_start_ts": "F",
-	"subscriber_success": "G",
-	"attempts": "H",
-	"latest_attempt_end_ts": "J",
-	"latest_exception": "L",
-	"exceptions_count": "M",
-	"all_subscribers_successful": "N",
-	"self": "B",
-	"get_unix_timestamp": "q",
-	"subscriber_name": "w",
-	"created_ts": "f",
-	"message": "m"
-
-
-
-}
+  return {"subscriber_objects": "subscriber_objects", "topic_objects": "topic_objects", "process_topic_events": "process_topic_events", "process_topic_event": "process_topic_event", "subscribe_to_topic": "subscribe_to_topic", "publish_message": "publish_message", "instance_id": "instance_id", "processing_retry_ms": "processing_retry_ms", "all_subscribers_ready": "all_subscribers_ready", "set_subscribers_ready": "set_subscribers_ready", "processing_in_progress": "processing_in_progress", "callback_function": "callback_function", "topic_events": "topic_events", "event_count": "event_count", "event_subscribers": "event_subscribers", "get_object_entries": "get_object_entries", "persist": "persist", "topic_name": "topic_name", "processing_scheduled": "processing_scheduled", "latest_attempt_start_ts": "latest_attempt_start_ts", "first_attempt_start_ts": "first_attempt_start_ts", "subscriber_success": "subscriber_success", "attempts": "attempts", "latest_attempt_end_ts": "latest_attempt_end_ts", "latest_exception": "latest_exception", "exceptions_count": "exceptions_count", "all_subscribers_successful": "all_subscribers_successful", "self": "self", "get_unix_timestamp": "get_unix_timestamp", "subscriber_name": "subscriber_name", "created_ts": "created_ts", "message": "message"}
 }
 
 function name_map_reversed() {
