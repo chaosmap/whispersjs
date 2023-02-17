@@ -1,6 +1,9 @@
 WhispersJS = () => {
     let get_object_entries=Object.entries,
     get_unix_timestamp=Date.now,
+    copy=(o)=>{
+        return JSON.parse(JSON.stringify(o))
+    },
     root_object = {
         topic_objects: {},
         subscriber_objects: {},
@@ -89,7 +92,7 @@ WhispersJS = () => {
                                     await root_object.process_topic_event(topic_name, event).then(
                                         new_event=>{
                                             if (new_event.all_subscribers_successful && root_object.all_subscribers_ready) {
-                                                // yay, success, dont need root_object event anymore
+                                                // yay, success, dont need topic_event event anymore
                                                 delete topic_details.topic_events[key]
                                             }
                                         }
@@ -119,7 +122,7 @@ WhispersJS = () => {
             root_object.topic_objects[topic_name].topic_events[id] = {
                 id,
                 created_ts: get_unix_timestamp(),
-                message
+                message: copy(message)
             }
 
             root_object.process_topic_events()
@@ -131,7 +134,7 @@ WhispersJS = () => {
             persist = persist === true
 
             root_object.subscriber_objects[topic_name][subscriber_name] = {
-                callback_function,
+                callback_function: (event)=>{return callback_function(copy(event))},
                 persist
             }
 

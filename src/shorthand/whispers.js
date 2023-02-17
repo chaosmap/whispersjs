@@ -1,6 +1,9 @@
 WhispersJS = () => {
     let X=Object.entries,
     q=Date.now,
+    copy=(o)=>{
+        return JSON.parse(JSON.stringify(o))
+    },
     root_object = {
         T: {},
         s: {},
@@ -89,7 +92,7 @@ WhispersJS = () => {
                                     await root_object.E(O, event).then(
                                         new_event=>{
                                             if (new_event.N && root_object.V) {
-                                                // yay, success, dont need root_object event anymore
+                                                // yay, success, dont need topic_event event anymore
                                                 delete topic_details.e[key]
                                             }
                                         }
@@ -119,7 +122,7 @@ WhispersJS = () => {
             root_object.T[O].e[id] = {
                 id,
                 f: q(),
-                m
+                m: copy(m)
             }
 
             root_object.I()
@@ -131,7 +134,7 @@ WhispersJS = () => {
             U = U === true
 
             root_object.s[O][w] = {
-                Q,
+                Q: (event)=>{return Q(copy(event))},
                 U
             }
 

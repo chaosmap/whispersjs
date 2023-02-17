@@ -68,8 +68,9 @@
         list_2.sort();
 
         for (let i=0; i<list_1.length; i++) {
-          if (list_1[i] !== list_2[i]) {
-            console.error(`list_1[${i}] (${list_1[i]}) != list_2[${i}] (${list_2[i]})`)
+
+          if (JSON.stringify(list_1[i]) !== JSON.stringify(list_2[i])) {
+            console.error(`list_1[${i}] (${JSON.stringify(list_1[i])}) != list_2[${i}] (${JSON.stringify(list_2[i])})`)
             return false
           }
         }
@@ -101,13 +102,15 @@
           "intruder": [],
           "intruder_errors": [],
           WhispersJS: [],
-          next: []
+          next: [],
+          mutation_test: []
         };
         window.expected_res = {
           "intruder": [],
           "intruder_errors": [],
           WhispersJS: [],
-          next: []
+          next: [],
+          mutation_test: []
         };
 
 
@@ -137,6 +140,21 @@
             )
           }
         )
+
+        const object_to_mutate = {mutated_object: false};
+        await wspr.P('mutation_test', object_to_mutate)
+        window.expected_res.mutation_test.push({mutated_object: false})
+        object_to_mutate.mutated_object = true;
+        wspr.S('mutation_test', 'mutation_tester', (event)=>{window.res.mutation_test.push(event.m); return true})
+        await wspr.I()
+        await new Promise(resolve => setTimeout(resolve, 10));
+        no_tests_failed &= boolean_test_pass(
+          "Check that a publish m is copied so that it cannot be mutated between the publish time and the subscriber receiving the m.", 
+          function() {
+            return compare_unordered_list(window.res.mutation_test, window.expected_res.mutation_test)
+          }
+        )
+
 
         const g3_func = (m) => {window.res.intruder.push(`guard_3 ${m.m}`); return true;};
         await wspr.S("intruder", "guard_3", g3_func);
@@ -184,6 +202,7 @@
         expected_res.WhispersJS = expected_res.WhispersJS.concat([
           // "system_log {\"e\":\"R\"}",
           "system_log {\"e\":\"I\"}",
+          "system_log {\"e\":\"S\",\"O\":\"mutation_test\",\"w\":\"mutation_tester\",\"U\":false}",
           "system_log {\"e\":\"S\",\"O\":\"#\",\"w\":\"system_log\",\"U\":false}",
           "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_1\",\"U\":false}",
           "system_log {\"e\":\"S\",\"O\":\"intruder\",\"w\":\"guard_2\",\"U\":false}",
