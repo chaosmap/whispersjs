@@ -2,7 +2,7 @@ import json
 
 # Publish the whispersjs tag and also place the tag into the demo template
 with open('src/shorthand/uglified/whispers.js', 'r') as wspr:
-	inline_tag_contents = 'wspr=wspr||(%s)();'%wspr.read()[11:-1]
+	inline_tag_contents = 'wspr=window.wspr||(%s)();'%wspr.read()[11:-1]
 
 with open('whispersjs_tag.html', 'w') as wspr_tag:
 	wspr_tag.write('<script type="text/javascript">%s</script>'%inline_tag_contents)
@@ -21,3 +21,9 @@ for read_file_path, write_file_path in [
 # Publish the whispers_plus js
 with open('src/shorthand/uglified/whispers_plus.js', 'r') as r, open('whispers_plus.js', 'w') as w:
 	w.write(r.read())
+
+# Also to the demo directory (no tests needed)
+with open('src/shorthand/uglified/whispers_plus.js', 'r') as r, open('demo/whispers_plus.js', 'w') as w:
+	w.write(
+		r.read()
+	)

@@ -44,17 +44,3 @@ with open('src/whispers_plus.js', 'w') as verbose:
 		# this will just map a name to its self instead of a shorthand
 		whispers_plus_template.replace(template_pattern, verbose_var_map)
 	)
-
-# Copy over files that are not uglified but needed in the uglified directory
-for filename in test_files + ['whispers_plus.js', 'name_map.json']:
-
-	with open('src/shorthand/%s'%filename, 'r') as orig, open('src/shorthand/uglified/%s'%filename, 'w') as short:
-		short.write(
-			orig.read()
-		)
-
-# Also to the demo directory (no tests needed)
-with open('src/shorthand/whispers_plus.js', 'r') as orig, open('demo/whispers_plus.js', 'w') as short:
-	short.write(
-		orig.read()
-	)
