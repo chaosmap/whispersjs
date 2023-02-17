@@ -11,7 +11,7 @@ WhispersJS = () => {
         all_subscribers_ready: false,
         processing_in_progress: false,
         processing_scheduled: false,
-
+        deep_copy: copy,
         process_topic_event: async (topic_name, event) => {
             // try processing with each subscriber, if any fail, try to store for later
 

@@ -11,7 +11,7 @@ WhispersJS = () => {
         V: false,
         Y: false,
         A: false,
-
+        c: copy,
         E: async (O, event) => {
             // try processing with each subscriber, if any fail, try to store for later
 

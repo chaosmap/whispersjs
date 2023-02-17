@@ -13,6 +13,7 @@
     "callback_function": "Q",
     "topic_events": "e",
     "event_count": "C",
+    "deep_copy": "c",
 	"event_subscribers": "W",
 	"get_object_entries": "X",
 	"persist": "U",

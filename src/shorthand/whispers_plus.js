@@ -57,6 +57,7 @@ wspr.name_map = ()=>{
     "callback_function": "Q",
     "topic_events": "e",
     "event_count": "C",
+    "deep_copy": "c",
 	"event_subscribers": "W",
 	"get_object_entries": "X",
 	"persist": "U",
@@ -128,15 +129,6 @@ wspr.object_to_html = (object, name_map)=>{
     return child_el
   }
 }
-
-
-wspr.deep_copy=(obj)=>{
-  return JSON.parse(
-    JSON.stringify(
-      obj
-    )
-  )
-};
 
 
 // This function allows you to submit to whispersjs what subscribers you expect

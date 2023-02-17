@@ -94,15 +94,6 @@ wspr.object_to_html = (object, name_map)=>{
 }
 
 
-wspr.deep_copy=(obj)=>{
-  return JSON.parse(
-    JSON.stringify(
-      obj
-    )
-  )
-};
-
-
 // This function allows you to submit to whispersjs what subscribers you expect
 // and to automatically call the subscribers ready function once they have all subscribed.
 // expected_subscribers are expected to be submitted in the following format
