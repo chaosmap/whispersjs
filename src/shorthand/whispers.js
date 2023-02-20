@@ -7,7 +7,7 @@ WhispersJS = () => {
     root_object = {
         T: {},
         s: {},
-        x: Math.floor(Math.random()*1000000000000000000),
+        x: ((Date.now()*1e18)+Math.random()*1e15).toString(36),
         V: false,
         Y: false,
         A: false,

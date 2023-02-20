@@ -7,7 +7,7 @@ WhispersJS = () => {
     root_object = {
         topic_objects: {},
         subscriber_objects: {},
-        instance_id: Math.floor(Math.random()*1000000000000000000),
+        instance_id: ((Date.now()*1e18)+Math.random()*1e15).toString(36),
         all_subscribers_ready: false,
         processing_in_progress: false,
         processing_scheduled: false,
